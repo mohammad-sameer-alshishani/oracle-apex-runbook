@@ -1,0 +1,622 @@
+TEST<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oracle Free + APEX + ORDS Runbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky variables panel on the left, numbered runbook on the right; stacks on narrow screens. */
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --ink:#1b2230; --muted:#5d6676; --line:#dde1e8;
+  --accent:#c2410c; --accent-soft:#fdeee6; --code-bg:#1e2430; --code-ink:#e6e9ef; --var:#ffb27a;
+  --ok:#15803d; --warn:#b45309; --warn-soft:#fff4e0; --bad:#b91c1c;
+  --display:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12151b; --surface:#1a1e26; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2b313d;
+    --accent:#fb8a4c; --accent-soft:#2c1d15; --code-bg:#0d1016; --code-ink:#e6e9ef; --var:#ffb27a;
+    --ok:#4ade80; --warn:#fbbf24; --warn-soft:#2a2112; --bad:#f87171; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12151b; --surface:#1a1e26; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2b313d;
+  --accent:#fb8a4c; --accent-soft:#2c1d15; --code-bg:#0d1016; --code-ink:#e6e9ef; --var:#ffb27a;
+  --ok:#4ade80; --warn:#fbbf24; --warn-soft:#2a2112; --bad:#f87171; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+a{color:var(--accent)}
+.wrap{display:grid;grid-template-columns:330px minmax(0,1fr);gap:28px;max-width:1280px;margin:0 auto;padding:24px 20px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+aside{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+@media (max-width:900px){aside{position:static;max-height:none}}
+aside h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.vgroup{margin:14px 0 4px;font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.vrow{display:grid;grid-template-columns:118px 1fr;gap:8px;align-items:center;margin:5px 0}
+.vrow label{font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.vrow input{width:100%;font-family:var(--mono);font-size:12.5px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.vrow input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.vrow input.bad{border-color:var(--bad)}
+.abtns{display:flex;gap:8px;margin-top:12px}
+button{font-family:var(--body);font-size:12.5px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:5px 10px}
+button:hover{border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#warnbox{display:none;margin-top:12px;padding:10px;border-radius:8px;background:var(--warn-soft);border:1px solid var(--warn);font-size:12.5px;color:var(--ink)}
+main{min-width:0}
+header.top h1{font-family:var(--display);font-size:28px;line-height:1.2;margin:0 0 6px;text-wrap:balance}
+header.top p{color:var(--muted);margin:0 0 10px;max-width:72ch}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
+.toc a{font-size:12.5px;text-decoration:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:3px 9px;border-radius:999px}
+.toc a:hover{border-color:var(--accent)}
+section.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-top:18px}
+section.step > h2{display:flex;gap:12px;align-items:baseline;font-size:20px;margin:0 0 6px;text-wrap:balance}
+.num{font-family:var(--mono);font-size:14px;font-weight:600;color:#fff;background:var(--accent);border-radius:6px;padding:1px 8px;flex:none}
+h3{font-size:15.5px;margin:18px 0 6px}
+h3 .sn{font-family:var(--mono);color:var(--accent);margin-right:6px}
+p,li{max-width:78ch}
+ol,ul{padding-left:22px;margin:6px 0}
+li{margin:3px 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.cmdbox{position:relative;margin:8px 0 10px}
+.cmdbox .lang{position:absolute;top:6px;left:12px;font-family:var(--mono);font-size:10.5px;color:#8b94a5;text-transform:uppercase;letter-spacing:.06em}
+.cmdbox button.copy{position:absolute;top:5px;right:6px;background:#2b3240;color:#e6e9ef;border-color:#3a4252;font-size:11.5px;padding:3px 9px}
+.cmdbox button.copy.done{background:var(--ok);border-color:var(--ok);color:#fff}
+pre.cmd{margin:0;background:var(--code-bg);color:var(--code-ink);font-family:var(--mono);font-size:13px;line-height:1.5;border-radius:8px;padding:28px 14px 12px;overflow-x:auto;white-space:pre}
+pre.cmd .v{color:var(--var);font-weight:500}
+pre.cmd .c{color:#7d8799}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:10px 0}
+.warn{border-left:3px solid var(--warn);background:var(--warn-soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:10px 0}
+.where{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;margin-right:6px;border:1px solid var(--line);color:var(--muted)}
+.where.cmd{color:var(--accent);border-color:var(--accent)}
+.where.sql{color:var(--ok);border-color:var(--ok)}
+.tbl{overflow-x:auto;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+td code{white-space:nowrap}
+.t{font-family:var(--mono);font-size:.9em;color:var(--accent);font-weight:500}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside aria-label="Variables">
+  <h2>Your values</h2>
+  <div id="vars"></div>
+  <div class="abtns">
+    <button type="button" id="resetBtn">Reset to defaults</button>
+  </div>
+  <div id="warnbox" role="status"></div>
+</aside>
+
+<main>
+<header class="top">
+  <h1>Oracle AI Database Free + APEX + ORDS: install, export and import</h1>
+  <p>Windows runbook. Fill in your values on the left and every command below updates. Each command has a Copy button. Badges show where to run it: <span class="where cmd">CMD</span> means a Windows Command Prompt (run as administrator), <span class="where sql">SQL&gt;</span> means inside SQL*Plus or Toad.</p>
+  <nav class="toc" aria-label="Steps">
+    <a href="#s1">1 Prerequisites</a><a href="#s2">2 Existing Oracle</a><a href="#s3">3 Install DB</a><a href="#s4">4 Connect &amp; fix</a><a href="#s5">5 APEX</a><a href="#s6">6 ORDS</a><a href="#s7">7 APEX images</a><a href="#s8">8 Workspace</a><a href="#s9">9 Create schema</a><a href="#s10">10 Toad</a><a href="#s11">11 Dump setup</a><a href="#s12">12 Export</a><a href="#s13">13 Import</a><a href="#s14">14 Verify</a><a href="#s15">15 APEX app export</a><a href="#s16">16 Daily start</a><a href="#s17">17 Errors</a>
+  </nav>
+</header>
+
+<!-- 1 -->
+<section class="step" id="s1">
+<h2><span class="num">1</span>Prerequisites</h2>
+<ol>
+  <li>Windows 10/11 x64, 8 GB+ RAM, about 15 GB free disk.</li>
+  <li>Java 17 or newer (ORDS needs it). Check:
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">java -version</pre></div>
+    If it's missing or older than 17, install JDK 21 from <a href="https://adoptium.net">adoptium.net</a> and tick <b>Set JAVA_HOME</b> and <b>Add to PATH</b>. Open a new CMD afterwards.</li>
+  <li>Downloads (an Oracle account may be required):
+    <ul>
+      <li>Database: <a href="https://www.oracle.com/database/free/get-started/">Oracle AI Database 26ai Free</a> → Windows zip</li>
+      <li>APEX: <a href="https://www.oracle.com/tools/downloads/apex-downloads.html">APEX downloads</a> → <code>apex_26.2.zip</code> (<code>apex_26.2_en.zip</code> installs faster)</li>
+      <li>ORDS: <a href="https://www.oracle.com/database/sqldeveloper/technologies/db-actions/download/">ORDS downloads</a> → <code>ords-latest.zip</code></li>
+      <li>Toad for Oracle: <a href="https://www.quest.com/products/toad-for-oracle/">Quest official site</a> (free trial; needs a valid license after that)</li>
+      <li>Free alternative to Toad: <a href="https://www.oracle.com/database/sqldeveloper/technologies/download/">Oracle SQL Developer</a></li>
+    </ul>
+  </li>
+</ol>
+<div class="warn"><b>Passwords:</b> don't use <code>@</code> in any Oracle password. In a command like <code>user/pass@host</code>, everything after the first <code>@</code> is read as the host, which causes <code>ORA-12262</code>. Use <code>#</code> or <code>_</code> instead.</div>
+</section>
+
+<!-- 2 -->
+<section class="step" id="s2">
+<h2><span class="num">2</span>Check for an existing Oracle install</h2>
+<p>If the 26ai installer says it's <i>already installed</i>, another Oracle database (often 21c XE) is on the PC.</p>
+<h3><span class="sn">2.1</span>List Oracle services</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sc query state= all | findstr /i "Oracle"</pre></div>
+<ul>
+  <li><code>OracleServiceXE</code> means 21c XE (PDB name <code>XEPDB1</code>).</li>
+  <li><code>OracleServiceFREE</code> means 23ai/26ai Free (PDB name <code>FREEPDB1</code>).</li>
+</ul>
+<h3><span class="sn">2.2</span>Option A: keep XE</h3>
+<p>Skip step 3. Set <span class="t">PDB</span> on the left to <code>XEPDB1</code>. APEX 24.2 is the safer choice on 21c.</p>
+<h3><span class="sn">2.3</span>Option B: remove XE (export any data you need first)</h3>
+<ol>
+  <li><b>Settings → Apps → Oracle Database 21c Express Edition → Uninstall.</b></li>
+  <li>Remove leftover services and registry keys:
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">net stop OracleServiceXE
+sc delete OracleServiceXE
+sc delete OracleJobSchedulerXE
+sc delete OracleOraDB21Home2TNSListener
+sc delete OracleOraDB21Home2MTSRecoveryService
+sc delete OracleVssWriterXE
+reg delete HKLM\SOFTWARE\Oracle /f</pre></div>
+    Service names can differ. Delete whatever 2.1 listed.</li>
+  <li>Delete the old install folder (usually <code>C:\app\&lt;user&gt;\product\21c</code>) and remove its <code>bin</code> entry from PATH.</li>
+  <li>Reboot.</li>
+</ol>
+</section>
+
+<!-- 3 -->
+<section class="step" id="s3">
+<h2><span class="num">3</span>Install Oracle AI Database 26ai Free</h2>
+<ol>
+  <li>Extract the Windows zip, right-click <code>setup.exe</code> → <b>Run as administrator</b>.</li>
+  <li>Accept the default folder (it becomes <span class="t" data-t="{{ORACLE_HOME}}"></span>) and set the SYS/SYSTEM password to <span class="t" data-t="{{SYS_PWD}}"></span>. Avoid <code>@</code>.</li>
+  <li>When it finishes you have: CDB <code>FREE</code>, PDB <span class="t" data-t="{{PDB}}"></span>, listener port <span class="t" data-t="{{PORT}}"></span>.</li>
+</ol>
+<div class="note">Install APEX and your schemas in the PDB (<span class="t" data-t="{{PDB}}"></span>), never in the root CDB (<code>FREE</code>).</div>
+</section>
+
+<!-- 4 -->
+<section class="step" id="s4">
+<h2><span class="num">4</span>Connect and fix connection problems</h2>
+<h3><span class="sn">4.1</span>Connect locally (works even if the listener is down)</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sqlplus / as sysdba</pre></div>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">SELECT name, open_mode FROM v$pdbs;</pre></div>
+<p>If <span class="t" data-t="{{PDB}}"></span> isn't <code>READ WRITE</code>, open it and make it open on every startup. Run each line on its own, with no comment after the <code>;</code> (a trailing comment caused <code>ORA-03405</code>):</p>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER PLUGGABLE DATABASE {{PDB}} OPEN;
+ALTER PLUGGABLE DATABASE {{PDB}} SAVE STATE;
+ALTER SYSTEM REGISTER;</pre></div>
+
+<h3><span class="sn">4.2</span>Change passwords to ones without <code>@</code></h3>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER USER sys IDENTIFIED BY {{SYS_PWD}} CONTAINER=ALL;
+ALTER USER system IDENTIFIED BY {{SYSTEM_PWD}} CONTAINER=ALL;
+exit</pre></div>
+
+<h3><span class="sn">4.3</span>Check the listener</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">lsnrctl status</pre></div>
+<ul>
+  <li><b>"no listener"</b>: run <code>lsnrctl start</code>, then <code>ALTER SYSTEM REGISTER;</code> as SYS.</li>
+  <li><b>Services list shows <code>freepdb1</code> but <code>HOST=<span data-t="{{PC_NAME}}" class="t"></span></code></b>: the listener ignores <code>localhost</code> (error <code>ORA-12543</code>). Fix with 4.4.</li>
+</ul>
+
+<h3><span class="sn">4.4</span>Make the listener accept <code>localhost</code></h3>
+<ol>
+  <li>Open Notepad <b>as administrator</b> and open:
+    <div class="cmdbox"><span class="lang">path</span><pre class="cmd">{{ORACLE_HOME}}\network\admin\listener.ora</pre></div></li>
+  <li>Change the TCP line's host to <code>0.0.0.0</code>:
+    <div class="cmdbox"><span class="lang">listener.ora</span><pre class="cmd">LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 0.0.0.0)(PORT = {{PORT}}))
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+    )
+  )</pre></div></li>
+  <li>Restart the listener and re-register:
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">lsnrctl stop
+lsnrctl start
+sqlplus / as sysdba</pre></div>
+    <div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SYSTEM REGISTER;
+exit</pre></div></li>
+</ol>
+<p>Quick workaround without editing the file: use <span class="t" data-t="{{PC_NAME}}"></span> or <code>127.0.0.1</code> as the host.</p>
+
+<h3><span class="sn">4.5</span>Test a network connection to the PDB</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sqlplus sys/{{SYS_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} as sysdba</pre></div>
+<p>If a password still contains <code>@</code>, leave it out and type it at the prompt: <code>sqlplus sys@<span class="t" data-t="{{HOST}}:{{PORT}}/{{PDB}}"></span> as sysdba</code>.</p>
+</section>
+
+<!-- 5 -->
+<section class="step" id="s5">
+<h2><span class="num">5</span>Install APEX</h2>
+<h3><span class="sn">5.1</span>Extract and find the installer</h3>
+<p>Extract <code>apex_26.2.zip</code> to <code>C:\</code>. The zip often creates a nested folder. Find where <code>apexins.sql</code> actually is and set <span class="t">APEX_DIR</span> to that folder:</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">dir C:\apex /s /b | findstr apexins.sql</pre></div>
+
+<h3><span class="sn">5.2</span>Connect from that folder, into the PDB</h3>
+<p>The installer opens other scripts relative to the current folder (wrong folder gives <code>SP2-0310</code>).</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">cd /d {{APEX_DIR}}
+sqlplus / as sysdba</pre></div>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SESSION SET CONTAINER = {{PDB}};
+SHOW CON_NAME</pre></div>
+<p><code>SHOW CON_NAME</code> must print <span class="t" data-t="{{PDB}}"></span>.</p>
+
+<h3><span class="sn">5.3</span>Check whether APEX is already installed</h3>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">SELECT version, status FROM dba_registry WHERE comp_id = 'APEX';</pre></div>
+<div class="tbl"><table>
+<tr><th>Result</th><th>Do this</th></tr>
+<tr><td>No rows</td><td>5.4 (install)</td></tr>
+<tr><td><code>26.2.x VALID</code></td><td>Skip to 5.6. Running the installer again fails with <code>ORA-20001 … APEX_260200 already exists</code>.</td></tr>
+<tr><td><code>INVALID</code> / <code>LOADING</code></td><td>5.5 (remove), then 5.4</td></tr>
+<tr><td>Older version, <code>VALID</code></td><td>5.4 upgrades it</td></tr>
+</table></div>
+
+<h3><span class="sn">5.4</span>Install (10–20 min)</h3>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">@apexins.sql SYSAUX SYSAUX TEMP /i/</pre></div>
+
+<h3><span class="sn">5.5</span>Remove a broken install</h3>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">@apxremov.sql
+exit</pre></div>
+<p>Reconnect as in 5.2, then run 5.4.</p>
+
+<h3><span class="sn">5.6</span>Set the APEX instance admin password</h3>
+<p>Connect as in 5.2 if you exited, then:</p>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">@apxchpwd.sql</pre></div>
+<ul>
+  <li>Username: press Enter (<code>ADMIN</code>). Email: any.</li>
+  <li>Password: <span class="t" data-t="{{APEX_ADMIN_PWD}}"></span>. It needs upper case, lower case, a digit and one of <code>!"`'#$%&amp;()[]{},.*+-/|\:;?_~</code>. <code>@</code> does <b>not</b> count as punctuation.</li>
+</ul>
+
+<h3><span class="sn">5.7</span>REST config and public user</h3>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">@apex_rest_config.sql
+ALTER USER APEX_PUBLIC_USER ACCOUNT UNLOCK IDENTIFIED BY {{APEX_PUBLIC_PWD}};
+exit</pre></div>
+<p><code>apex_rest_config.sql</code> asks for passwords for <code>APEX_LISTENER</code> and <code>APEX_REST_PUBLIC_USER</code>. Avoid <code>@</code> there too.</p>
+</section>
+
+<!-- 6 -->
+<section class="step" id="s6">
+<h2><span class="num">6</span>Install and run ORDS</h2>
+<h3><span class="sn">6.1</span>Extract</h3>
+<p>Right-click <code>ords-latest.zip</code> → <b>Extract All…</b> → <span class="t" data-t="{{ORDS_DIR}}"></span>. Check that <code><span class="t" data-t="{{ORDS_DIR}}"></span>\bin\ords.exe</code> exists. If the files are one folder deeper, move them up.</p>
+<h3><span class="sn">6.2</span>Add ORDS to PATH</h3>
+<ol>
+  <li>Press <b>Win</b>, type <b>environment variables</b>, open <b>Edit the system environment variables</b>.</li>
+  <li><b>Environment Variables…</b> → under <b>System variables</b> select <b>Path</b> → <b>Edit</b> → <b>New</b> → enter <code><span class="t" data-t="{{ORDS_DIR}}"></span>\bin</code> → OK ×3.</li>
+  <li>Open a <b>new</b> CMD as administrator and test:
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">ords --version</pre></div></li>
+</ol>
+<h3><span class="sn">6.3</span>Run the installer</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">mkdir {{ORDS_CONFIG}}
+ords --config {{ORDS_CONFIG}} install</pre></div>
+<div class="tbl"><table>
+<tr><th>Prompt</th><th>Answer</th></tr>
+<tr><td>Connection type</td><td><code>1</code> (Basic)</td></tr>
+<tr><td>Host</td><td><span class="t" data-t="{{HOST}}"></span> (or <span class="t" data-t="{{PC_NAME}}"></span> if 4.4 isn't done)</td></tr>
+<tr><td>Port</td><td><span class="t" data-t="{{PORT}}"></span></td></tr>
+<tr><td>Service name</td><td><span class="t" data-t="{{PDB}}"></span></td></tr>
+<tr><td>Admin username / password</td><td><code>SYS AS SYSDBA</code> / <span class="t" data-t="{{SYS_PWD}}"></span></td></tr>
+<tr><td>Features</td><td>Enter (defaults)</td></tr>
+<tr><td>Protocol / port</td><td><code>1</code> (HTTP) / <span class="t" data-t="{{ORDS_PORT}}"></span></td></tr>
+<tr><td>APEX static resources location</td><td><code><span class="t" data-t="{{APEX_DIR}}"></span>\images</code></td></tr>
+</table></div>
+<h3><span class="sn">6.4</span>Start ORDS</h3>
+<p>If the installer already left ORDS running (last line mentions <i>Started</i> / <i>initialized</i>), keep that window open. Otherwise open a new CMD:</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">ords --config {{ORDS_CONFIG}} serve</pre></div>
+<p>Keep this window open while you use APEX. If you see "address already in use", ORDS is already running in another window. Open <a id="apexurl" href="#"></a>.</p>
+</section>
+
+<!-- 7 -->
+<section class="step" id="s7">
+<h2><span class="num">7</span>Fix "Oracle APEX files have not been loaded"</h2>
+<p>If the login page appears unstyled with that pop-up, ORDS can't find APEX's images folder. Pick one option, then refresh with <b>Ctrl+F5</b>.</p>
+<h3><span class="sn">7.1</span>Option A: Oracle CDN (simplest, needs internet)</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">cd /d {{APEX_DIR}}
+sqlplus / as sysdba</pre></div>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SESSION SET CONTAINER = {{PDB}};
+SELECT version FROM dba_registry WHERE comp_id = 'APEX';
+@utilities/reset_image_prefix.sql</pre></div>
+<p>At the prompt enter (match the first three parts of the version):</p>
+<div class="cmdbox"><span class="lang">prefix</span><pre class="cmd">https://static.oracle.com/cdn/apex/{{APEX_CDN}}/</pre></div>
+<h3><span class="sn">7.2</span>Option B: local files (offline)</h3>
+<p>Stop ORDS with <b>Ctrl+C</b>, then:</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">ords --config {{ORDS_CONFIG}} config set standalone.static.path {{APEX_DIR}}\images
+ords --config {{ORDS_CONFIG}} serve</pre></div>
+</section>
+
+<!-- 8 -->
+<section class="step" id="s8">
+<h2><span class="num">8</span>Log in and create a workspace</h2>
+<ol>
+  <li>Open <a class="apexurl2" href="#"></a> and log in with workspace <code>INTERNAL</code>, user <code>ADMIN</code>, password <span class="t" data-t="{{APEX_ADMIN_PWD}}"></span>. If you forgot the password, run 5.6 again.</li>
+  <li><b>Create Workspace</b> → name it (e.g. <span class="t" data-t="{{SCHEMA}}"></span>).</li>
+  <li><b>Re-use existing schema?</b> Choose <b>No</b> to create a schema now, or <b>Yes</b> to pick one made in step 9.</li>
+  <li>Set the workspace admin username and password. These are the credentials you'll use day to day.</li>
+  <li>Sign out, then sign in with your workspace name and that user.</li>
+</ol>
+<p>To give an existing workspace another schema: <b>Manage Workspaces → Manage Workspace to Schema Assignments → Add</b>.</p>
+</section>
+
+<!-- 9 -->
+<section class="step" id="s9">
+<h2><span class="num">9</span>Create a schema manually</h2>
+<p>In Oracle, a schema is a user. Run this as SYS or SYSTEM in the PDB.</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sqlplus / as sysdba</pre></div>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SESSION SET CONTAINER = {{PDB}};
+
+CREATE USER {{SCHEMA}} IDENTIFIED BY {{SCHEMA_PWD}}
+  DEFAULT TABLESPACE USERS
+  TEMPORARY TABLESPACE TEMP
+  QUOTA UNLIMITED ON USERS;
+
+GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE SEQUENCE,
+      CREATE PROCEDURE, CREATE TRIGGER, CREATE TYPE, CREATE SYNONYM,
+      CREATE MATERIALIZED VIEW, CREATE JOB TO {{SCHEMA}};</pre></div>
+<p>Reset a forgotten password or unlock the account:</p>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER USER {{SCHEMA}} IDENTIFIED BY {{SCHEMA_PWD}} ACCOUNT UNLOCK;</pre></div>
+<p>Find a schema whose name you don't remember (APEX may have named it differently):</p>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">SELECT username, account_status, created FROM dba_users ORDER BY created DESC FETCH FIRST 10 ROWS ONLY;</pre></div>
+</section>
+
+<!-- 10 -->
+<section class="step" id="s10">
+<h2><span class="num">10</span>Connect Toad</h2>
+<h3><span class="sn">10.1</span>Direct tab (easiest)</h3>
+<div class="tbl"><table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>User / Password</td><td><span class="t" data-t="{{SCHEMA}}"></span> / <span class="t" data-t="{{SCHEMA_PWD}}"></span></td></tr>
+<tr><td>Host</td><td><span class="t" data-t="{{HOST}}"></span></td></tr>
+<tr><td>Port</td><td><span class="t" data-t="{{PORT}}"></span></td></tr>
+<tr><td>Service Name (not SID)</td><td><span class="t" data-t="{{PDB}}"></span></td></tr>
+<tr><td>Connect as</td><td><code>Normal</code> (use <code>SYSDBA</code> only for user SYS)</td></tr>
+</table></div>
+<div class="note">Choosing database <code>FREE</code> on the TNS tab connects to the root CDB, where your schema doesn't exist. That gives <code>ORA-01017</code>.</div>
+<h3><span class="sn">10.2</span>TNS tab (alternative)</h3>
+<p>Click <b>TNSNames Editor</b>, add this entry, save, then choose it in the Database dropdown:</p>
+<div class="cmdbox"><span class="lang">tnsnames.ora</span><pre class="cmd">{{PDB}} =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = {{HOST}})(PORT = {{PORT}}))
+    (CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = {{PDB}}))
+  )</pre></div>
+</section>
+
+<!-- 11 -->
+<section class="step" id="s11">
+<h2><span class="num">11</span>One-time setup for dumps</h2>
+<h3><span class="sn">11.1</span>Create the Windows folder</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">mkdir {{DUMP_PATH}}</pre></div>
+<h3><span class="sn">11.2</span>Create the directory object and grant access</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sqlplus / as sysdba</pre></div>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SESSION SET CONTAINER = {{PDB}};
+CREATE OR REPLACE DIRECTORY {{DUMP_DIR}} AS '{{DUMP_PATH}}';
+GRANT READ, WRITE ON DIRECTORY {{DUMP_DIR}} TO {{SCHEMA}};
+GRANT DATAPUMP_EXP_FULL_DATABASE, DATAPUMP_IMP_FULL_DATABASE TO {{SCHEMA}};
+SELECT directory_name, directory_path FROM dba_directories WHERE directory_name = UPPER('{{DUMP_DIR}}');
+exit</pre></div>
+<p>The two <code>DATAPUMP_*</code> roles are only needed to import into a <i>different</i> schema (remap) or to export other schemas. Exporting and importing your own schema works without them.</p>
+<h3><span class="sn">11.3</span>If Oracle can't write to the folder</h3>
+<p>Errors <code>ORA-39087</code>, <code>ORA-39070</code> or <code>ORA-29283</code> mean the Oracle service account can't write there:</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">icacls {{DUMP_PATH}} /grant "Everyone":(OI)(CI)F</pre></div>
+<p>For a tighter grant, use the account shown in <b>services.msc → OracleServiceFREE → Log On</b> instead of <code>Everyone</code>.</p>
+</section>
+
+<!-- 12 -->
+<section class="step" id="s12">
+<h2><span class="num">12</span>Export (create the dump)</h2>
+<div class="warn">Run <code>expdp</code> and <code>impdp</code> at the <code>C:\&gt;</code> prompt, not at <code>SQL&gt;</code> (that gives <code>SP2-0734</code>). Inside SQL*Plus, put <code>HOST</code> in front of the command. Each command is one line, so don't add <code>^</code> line breaks when pasting.</div>
+<h3><span class="sn">12.1</span>Whole schema (most common)</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">expdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} schemas={{SCHEMA}} directory={{DUMP_DIR}} dumpfile={{DUMP_FILE}} logfile={{LOG_PREFIX}}_exp.log</pre></div>
+<p>Success ends with <code>Job "<span class="t" data-t="{{SCHEMA}}"></span>"."SYS_EXPORT_SCHEMA_01" successfully completed</code>. Files: <code><span class="t" data-t="{{DUMP_PATH}}"></span>\<span class="t" data-t="{{DUMP_FILE}}"></span></code> and the log.</p>
+<h3><span class="sn">12.2</span>Selected tables only</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">expdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} tables={{TABLES}} directory={{DUMP_DIR}} dumpfile={{LOG_PREFIX}}_tables.dmp logfile={{LOG_PREFIX}}_tables_exp.log</pre></div>
+<h3><span class="sn">12.3</span>Structure only, no data</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">expdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} schemas={{SCHEMA}} content=METADATA_ONLY directory={{DUMP_DIR}} dumpfile={{LOG_PREFIX}}_ddl.dmp logfile={{LOG_PREFIX}}_ddl_exp.log</pre></div>
+<h3><span class="sn">12.4</span>For an older target database (e.g. 19c)</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">expdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} schemas={{SCHEMA}} version=19 directory={{DUMP_DIR}} dumpfile={{LOG_PREFIX}}_v19.dmp logfile={{LOG_PREFIX}}_v19_exp.log</pre></div>
+<h3><span class="sn">12.5</span>Whole PDB (as SYSTEM)</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">expdp system/{{SYSTEM_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} full=y directory={{DUMP_DIR}} dumpfile=full.dmp logfile=full_exp.log</pre></div>
+</section>
+
+<!-- 13 -->
+<section class="step" id="s13">
+<h2><span class="num">13</span>Import (restore the dump)</h2>
+<div class="tbl"><table>
+<tr><th>Goal</th><th>Use</th></tr>
+<tr><td>Make a copy in a different schema, original untouched</td><td>13.1</td></tr>
+<tr><td>Restore tables and data into the same schema</td><td>13.2</td></tr>
+<tr><td>Replace <b>everything</b> in the same schema (tables, procedures, packages, views…)</td><td>13.3</td></tr>
+<tr><td>Replace only code objects, keep current tables</td><td>13.4</td></tr>
+</table></div>
+
+<h3><span class="sn">13.1</span>Into another schema (remap)</h3>
+<p>Needs <code>DATAPUMP_IMP_FULL_DATABASE</code> on <span class="t" data-t="{{SCHEMA}}"></span> (11.2). <span class="t" data-t="{{TARGET_SCHEMA}}"></span> is created automatically.</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">impdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} directory={{DUMP_DIR}} dumpfile={{DUMP_FILE}} remap_schema={{SCHEMA}}:{{TARGET_SCHEMA}} table_exists_action=REPLACE logfile={{LOG_PREFIX}}_imp_remap.log</pre></div>
+<p>Then give the new schema a password so you can log in:</p>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SESSION SET CONTAINER = {{PDB}};
+ALTER USER {{TARGET_SCHEMA}} IDENTIFIED BY {{TARGET_PWD}} ACCOUNT UNLOCK;</pre></div>
+
+<h3><span class="sn">13.2</span>Same schema: tables and data</h3>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">impdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} directory={{DUMP_DIR}} dumpfile={{DUMP_FILE}} table_exists_action=REPLACE logfile={{LOG_PREFIX}}_imp.log</pre></div>
+<div class="tbl"><table>
+<tr><th><code>table_exists_action</code></th><th>Effect on a table that already exists</th></tr>
+<tr><td><code>SKIP</code> (default)</td><td>Leaves it as is</td></tr>
+<tr><td><code>APPEND</code></td><td>Keeps rows and adds the dump's rows</td></tr>
+<tr><td><code>TRUNCATE</code></td><td>Empties it, loads the dump's rows, keeps the current structure</td></tr>
+<tr><td><code>REPLACE</code></td><td>Drops it and recreates it with the structure and data from the dump</td></tr>
+</table></div>
+<div class="note">Existing procedures, packages, views, sequences and triggers are <b>not</b> replaced. They're skipped with <code>ORA-31684: Object type … already exists</code>. Use 13.3 or 13.4 to replace them.</div>
+
+<h3><span class="sn">13.3</span>Same schema: replace everything</h3>
+<p>Drop the schema, then import as SYSTEM. The import recreates the user, its grants and all objects exactly as they were in the dump.</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sqlplus / as sysdba</pre></div>
+<div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">ALTER SESSION SET CONTAINER = {{PDB}};
+DROP USER {{SCHEMA}} CASCADE;
+exit</pre></div>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">impdp system/{{SYSTEM_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} directory={{DUMP_DIR}} dumpfile={{DUMP_FILE}} logfile={{LOG_PREFIX}}_imp_full.log</pre></div>
+<div class="warn">You can't run this import as <span class="t" data-t="{{SCHEMA}}"></span>, because that user no longer exists after the drop. Make sure the SYSTEM password works first (4.2).</div>
+
+<h3><span class="sn">13.4</span>Same schema: replace code only</h3>
+<p>This writes the DDL to a script instead of importing:</p>
+<div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">impdp {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}} directory={{DUMP_DIR}} dumpfile={{DUMP_FILE}} sqlfile={{LOG_PREFIX}}_code.sql include=PROCEDURE,FUNCTION,PACKAGE,VIEW,TRIGGER</pre></div>
+<p>Open <code><span class="t" data-t="{{DUMP_PATH}}"></span>\<span class="t" data-t="{{LOG_PREFIX}}"></span>_code.sql</code> in Toad, change <code>CREATE</code> to <code>CREATE OR REPLACE</code>, and run it as <span class="t" data-t="{{SCHEMA}}"></span>.</p>
+</section>
+
+<!-- 14 -->
+<section class="step" id="s14">
+<h2><span class="num">14</span>Verify the import</h2>
+<ol>
+  <li>The import should end with <code>successfully completed</code>. <code>completed with N error(s)</code> is often just grant warnings. Check the <code>.log</code> in <span class="t" data-t="{{DUMP_PATH}}"></span>.</li>
+  <li>Compare objects and row counts (as SYS or SYSTEM):
+    <div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">SELECT owner, object_type, COUNT(*) AS cnt
+FROM dba_objects
+WHERE owner IN ('{{SCHEMA}}', '{{TARGET_SCHEMA}}')
+GROUP BY owner, object_type
+ORDER BY object_type, owner;
+
+SELECT COUNT(*) FROM {{SCHEMA}}.YOUR_TABLE;
+SELECT COUNT(*) FROM {{TARGET_SCHEMA}}.YOUR_TABLE;</pre></div></li>
+  <li>Remove a test copy:
+    <div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">DROP USER {{TARGET_SCHEMA}} CASCADE;</pre></div></li>
+</ol>
+</section>
+
+<!-- 15 -->
+<section class="step" id="s15">
+<h2><span class="num">15</span>Export the APEX application</h2>
+<p>A schema dump does <b>not</b> include your APEX app. App definitions are stored in the APEX engine schema, so export them separately.</p>
+<ol>
+  <li><b>From the UI:</b> App Builder → your app → <b>Export / Import → Export</b>. This saves a <code>.sql</code> file.</li>
+  <li><b>With SQLcl (scriptable):</b>
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">sql {{SCHEMA}}/{{SCHEMA_PWD}}@{{HOST}}:{{PORT}}/{{PDB}}</pre></div>
+    <div class="cmdbox"><span class="lang">SQL&gt;</span><pre class="cmd">apex export -applicationid {{APP_ID}}
+apex export -applicationid {{APP_ID}} -split</pre></div>
+    <code>-split</code> writes one file per component, which works well with Git.</li>
+  <li><b>Restore order:</b> create the workspace and schema → import the dump (13) → App Builder → <b>Import</b> the app <code>.sql</code>.</li>
+</ol>
+</section>
+
+<!-- 16 -->
+<section class="step" id="s16">
+<h2><span class="num">16</span>Daily start (after a reboot)</h2>
+<ol>
+  <li>The database and listener services normally start on their own. If not:
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">net start OracleServiceFREE
+lsnrctl start</pre></div></li>
+  <li>Start ORDS and keep the window open:
+    <div class="cmdbox"><span class="lang">CMD</span><pre class="cmd">ords --config {{ORDS_CONFIG}} serve</pre></div></li>
+  <li>Open <a class="apexurl2" href="#"></a>.</li>
+</ol>
+</section>
+
+<!-- 17 -->
+<section class="step" id="s17">
+<h2><span class="num">17</span>Errors and fixes</h2>
+<div class="tbl"><table>
+<tr><th>Error</th><th>Cause</th><th>Fix</th></tr>
+<tr><td>Installer: "already installed"</td><td>Another Oracle database (e.g. 21c XE) is present</td><td><a href="#s2">2</a></td></tr>
+<tr><td><code>ORA-12262</code> could not resolve hostname <code>2001@localhost</code></td><td><code>@</code> inside the password</td><td><a href="#s4">4.2</a>, or type the password at the prompt</td></tr>
+<tr><td><code>ORA-12543</code> destination host unreachable</td><td>Listener down, or bound to the PC name only</td><td><a href="#s4">4.3 / 4.4</a></td></tr>
+<tr><td><code>ORA-03405</code> end of query reached</td><td>A <code>-- comment</code> after <code>;</code> merged two statements</td><td>Run each statement on its own line without comments</td></tr>
+<tr><td><code>SP2-0310</code> unable to open file <code>apexins.sql</code></td><td>SQL*Plus started from the wrong folder</td><td><a href="#s5">5.1 / 5.2</a></td></tr>
+<tr><td><code>ORA-20001</code> … <code>APEX_260200</code> already exists</td><td>APEX is already installed</td><td><a href="#s5">5.3</a></td></tr>
+<tr><td>APEX password complexity / <code>ORA-20001</code> password validation failed</td><td>No allowed punctuation (<code>@</code> doesn't count)</td><td><a href="#s5">5.6</a></td></tr>
+<tr><td>"Oracle APEX files have not been loaded"</td><td>ORDS can't find the images folder</td><td><a href="#s7">7</a></td></tr>
+<tr><td><code>ORA-01017</code> invalid credential</td><td>Wrong password, or connected to CDB <code>FREE</code> instead of the PDB</td><td><a href="#s9">9</a> (reset password); always include <code>@<span class="t" data-t="{{HOST}}:{{PORT}}/{{PDB}}"></span></code></td></tr>
+<tr><td><code>SP2-0734</code> unknown command "expdp…"</td><td>Ran <code>expdp</code>/<code>impdp</code> at <code>SQL&gt;</code></td><td><code>exit</code> first, or prefix with <code>HOST</code></td></tr>
+<tr><td><code>ORA-39087 / 39070 / 29283</code></td><td>Directory object missing, or folder not writable</td><td><a href="#s11">11</a></td></tr>
+<tr><td><code>ORA-31631</code> privileges are required</td><td>Remap/import of another schema without the role</td><td>Grant <code>DATAPUMP_IMP_FULL_DATABASE</code> (<a href="#s11">11.2</a>)</td></tr>
+<tr><td><code>ORA-31684</code> object already exists</td><td>Non-table objects aren't replaced on import</td><td><a href="#s13">13.3 / 13.4</a></td></tr>
+<tr><td>ORDS: address already in use</td><td>ORDS is already running in another window</td><td>Use the open one, or close it and serve again</td></tr>
+</table></div>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  const GROUPS = [
+    ["Database", [
+      ["HOST","localhost"],["PC_NAME","Hammoda-PC"],["PORT","1521"],["PDB","FREEPDB1"],
+      ["SYS_PWD","Admin2026"],["SYSTEM_PWD","Admin2026"],
+      ["ORACLE_HOME","C:\\app\\moham\\product\\26ai\\dbhomeFree"]
+    ]],
+    ["APEX", [
+      ["APEX_DIR","C:\\apex\\apex"],["APEX_CDN","26.2.0"],["APEX_ADMIN_PWD","Admin#2026"],
+      ["APEX_PUBLIC_PWD","Admin2026"],["APP_ID","100"]
+    ]],
+    ["ORDS", [
+      ["ORDS_DIR","C:\\ords"],["ORDS_CONFIG","C:\\ords_config"],["ORDS_PORT","8080"]
+    ]],
+    ["Schema & dump", [
+      ["SCHEMA","FDI17"],["SCHEMA_PWD","FDI17"],["TARGET_SCHEMA","FDI17_COPY"],["TARGET_PWD","FDI17_COPY"],
+      ["DUMP_PATH","C:\\oracle_dumps"],["DUMP_DIR","DUMP_DIR"],["DUMP_FILE","fdi17.dmp"],
+      ["LOG_PREFIX","fdi17"],["TABLES","TABLE1,TABLE2"]
+    ]]
+  ];
+  const DEFAULTS = {}; GROUPS.forEach(g => g[1].forEach(([k,v]) => DEFAULTS[k]=v));
+  const KEY = "oracle-runbook-vars-v1";
+  let vals = Object.assign({}, DEFAULTS);
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "{}"); Object.keys(DEFAULTS).forEach(k => { if (typeof s[k] === "string") vals[k] = s[k]; }); } catch(e) {}
+
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const fill = (tpl, html) => tpl.replace(/\{\{(\w+)\}\}/g, (m,k) => {
+    const v = (k in vals) ? vals[k] : m;
+    return html ? '<span class="v">' + esc(v) + '</span>' : v;
+  });
+
+  // Build variable inputs
+  const box = document.getElementById("vars");
+  GROUPS.forEach(([name, items]) => {
+    const h = document.createElement("div"); h.className = "vgroup"; h.textContent = name; box.appendChild(h);
+    items.forEach(([k]) => {
+      const row = document.createElement("div"); row.className = "vrow";
+      const id = "var-" + k;
+      row.innerHTML = '<label for="' + id + '">' + k + '</label><input id="' + id + '" spellcheck="false" autocomplete="off">';
+      const inp = row.querySelector("input"); inp.value = vals[k]; inp.dataset.k = k;
+      inp.addEventListener("input", () => { vals[k] = inp.value; save(); render(); });
+      box.appendChild(row);
+    });
+  });
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(vals)); } catch(e) {} }
+
+  // Wrap command blocks with copy buttons; store templates
+  const pres = Array.from(document.querySelectorAll("pre.cmd"));
+  pres.forEach(pre => {
+    pre._tpl = pre.textContent;
+    const wrap = pre.parentElement;
+    const btn = document.createElement("button"); btn.type = "button"; btn.className = "copy"; btn.textContent = "Copy";
+    btn.addEventListener("click", async () => {
+      const text = fill(pre._tpl, false);
+      let ok = false;
+      try { await navigator.clipboard.writeText(text); ok = true; } catch(e) {
+        try { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); ok = document.execCommand("copy"); s.removeAllRanges(); } catch(e2) {}
+      }
+      btn.textContent = ok ? "Copied" : "Select & copy"; btn.classList.toggle("done", ok);
+      setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1400);
+    });
+    wrap.appendChild(btn);
+  });
+  const inl = Array.from(document.querySelectorAll("[data-t]"));
+
+  function render(){
+    pres.forEach(pre => { pre.innerHTML = fill(pre._tpl, true); });
+    inl.forEach(el => { el.textContent = fill(el.dataset.t, false); });
+    const url = "http://localhost:" + (vals.ORDS_PORT || "8080") + "/ords/apex";
+    document.querySelectorAll("#apexurl, .apexurl2").forEach(a => { a.href = url; a.textContent = url; });
+    // Warnings
+    const msgs = [];
+    Object.keys(vals).filter(k => /_PWD$/.test(k)).forEach(k => {
+      const inp = document.getElementById("var-" + k);
+      const bad = vals[k].includes("@");
+      inp.classList.toggle("bad", bad);
+      if (bad) msgs.push("<b>" + k + "</b> contains <code>@</code>. Commands that use it will fail with ORA-12262. Change the password (step 4.2 / 9).");
+    });
+    const ap = vals.APEX_ADMIN_PWD || "";
+    if (!(/[A-Z]/.test(ap) && /[a-z]/.test(ap) && /\d/.test(ap) && /[!"`'#$%&()\[\]{},.*+\-\/|\\:;?_~]/.test(ap))) {
+      msgs.push("<b>APEX_ADMIN_PWD</b> must have upper case, lower case, a digit and a punctuation character other than <code>@</code>.");
+      document.getElementById("var-APEX_ADMIN_PWD").classList.add("bad");
+    }
+    const wb = document.getElementById("warnbox");
+    wb.innerHTML = msgs.join("<br>"); wb.style.display = msgs.length ? "block" : "none";
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    vals = Object.assign({}, DEFAULTS); save();
+    document.querySelectorAll("#vars input").forEach(i => { i.value = vals[i.dataset.k]; });
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
